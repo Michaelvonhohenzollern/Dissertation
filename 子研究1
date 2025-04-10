@@ -1,0 +1,187 @@
+import pandas as pd
+import networkx as nx
+from networkx.algorithms import bipartite
+
+# 读文件。行标题为item, 列标题为user
+# df = pd.read_excel('/Users/zhangrunzhe/Desktop/验证数据-风能/历年数据统一节点/C/2020.xlsx', index_col=0)
+df = pd.read_excel('/Users/zhangrunzhe/Desktop/HydroPolicies/分年份/mtx/C/2021.xlsx', index_col=0)
+df = df.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+
+# 创建二模网络
+B = nx.Graph()
+users = df.index.tolist()
+items = df.columns.tolist()
+
+# 节点
+B.add_nodes_from(users, bipartite=0)
+B.add_nodes_from(items, bipartite=1)
+
+# 边
+for user in users:
+    for item in items:
+        interaction = df.at[user, item]
+        if interaction > 0:
+            B.add_edge(user, item, weight=interaction)
+
+# 投影
+user_projection = bipartite.weighted_projected_graph(B, users)
+item_projection = bipartite.weighted_projected_graph(B, items)
+
+# 网络密度
+user_density = nx.density(user_projection)
+item_density = nx.density(item_projection)
+print(f'user网络密度: {user_density}')
+print(f'item网络密度: {item_density}')
+
+# 度数中心度
+user_degree_centrality = nx.degree_centrality(user_projection)
+item_degree_centrality = nx.degree_centrality(item_projection)
+
+# print('************************************************************')
+# print('user度数中心度:')
+# for user, centrality in user_degree_centrality.items():
+#     print(f'{user}: {centrality}')
+#
+# print(':::::::::::::::::::::::::::::::::::::::')
+# print('item度数中心度:')
+# for item, centrality in item_degree_centrality.items():
+#     print(f'{item}: {centrality}')
+
+# 聚类系数
+user_clustering_coefficient = nx.clustering(user_projection)
+item_clustering_coefficient = nx.clustering(item_projection)
+
+# print('************************************************************')
+# print('user聚类系数:')
+# for user, coefficient in user_clustering_coefficient.items():
+#     print(f'{user}: {coefficient}')
+#
+
+# print(':::::::::::::::::::::::::::::::::::::::')
+# print('item聚类系数:')
+# for item, coefficient in item_clustering_coefficient.items():
+#     print(f'{item}: {coefficient}')
+
+# 小世界值
+print('************************************************************')
+if nx.is_connected(user_projection):
+    user_average_clustering = nx.average_clustering(user_projection)
+    user_average_shortest_path_length = nx.average_shortest_path_length(user_projection)
+    user_small_world = user_average_clustering / user_average_shortest_path_length
+    print(f'user小世界值: {user_small_world}')
+else:
+    print('user图是不连通的，无法计算平均最短路径长度和小世界值。')
+
+print(':::::::::::::::::::::::::::::::::::::::')
+if nx.is_connected(item_projection):
+    item_average_clustering = nx.average_clustering(item_projection)
+    item_average_shortest_path_length = nx.average_shortest_path_length(item_projection)
+    item_small_world = item_average_clustering / item_average_shortest_path_length
+    print(f'item小世界值: {item_small_world}')
+else:
+    print('item图是不连通的，无法计算平均最短路径长度和小世界值。')
+
+# user网络的平均路径长度和直径
+print('************************************************************')
+if nx.is_connected(user_projection):
+    user_average_path_length = nx.average_shortest_path_length(user_projection)
+    user_diameter = nx.diameter(user_projection)
+    print(f'user网络的平均路径长度: {user_average_path_length}')
+    print(f'user网络的直径: {user_diameter}')
+else:
+    print('user图是不连通的，无法计算平均路径长度和直径。')
+
+# item网络的平均路径长度和直径
+print(':::::::::::::::::::::::::::::::::::::::')
+if nx.is_connected(item_projection):
+    item_average_path_length = nx.average_shortest_path_length(item_projection)
+    item_diameter = nx.diameter(item_projection)
+    print(f'item网络的平均路径长度: {item_average_path_length}')
+    print(f'item网络的直径: {item_diameter}')
+else:
+    print('item图是不连通的，无法计算平均路径长度和直径。')
+
+# 接近中心度
+user_closeness_centrality = nx.closeness_centrality(user_projection)
+item_closeness_centrality = nx.closeness_centrality(item_projection)
+
+# print('user接近中心度:')
+# for user, closeness in user_closeness_centrality.items():
+#     print(f'{user}: {closeness}')
+#
+# print('item接近中心度:')
+# for item, closeness in item_closeness_centrality.items():
+#     print(f'{item}: {closeness}')
+
+# 中介中心度
+user_betweenness_centrality = nx.betweenness_centrality(user_projection)
+item_betweenness_centrality = nx.betweenness_centrality(item_projection)
+
+# print('************************************************************')
+# print('user中介中心度:')
+# for user, betweenness in user_betweenness_centrality.items():
+#     print(f'{user}: {betweenness}')
+#
+# print('item中介中心度:')
+# for item, betweenness in item_betweenness_centrality.items():
+#     print(f'{item}: {betweenness}')
+
+
+# 特征向量中心度
+user_eigenvector_centrality = nx.eigenvector_centrality(user_projection)
+item_eigenvector_centrality = nx.eigenvector_centrality(item_projection)
+
+# print('item特征向量中心度:')
+# for item, eigenvector in item_eigenvector_centrality.items():
+#     print(f'{item}: {eigenvector}')
+#
+# print('user特征向量中心度:')
+# for user, eigenvector in user_eigenvector_centrality.items():
+#     print(f'{user}: {eigenvector}')
+
+
+
+# user和item的平均degree, closeness, betweenness，聚类系数
+print('************************************************************')
+average_user_degree_centrality = sum(user_degree_centrality.values()) / len(user_degree_centrality)
+average_user_closeness_centrality = sum(user_closeness_centrality.values()) / len(user_closeness_centrality)
+average_user_betweenness_centrality = sum(user_betweenness_centrality.values()) / len(user_betweenness_centrality)
+average_user_clustering = nx.average_clustering(user_projection)
+average_item_degree_centrality = sum(item_degree_centrality.values()) / len(item_degree_centrality)
+average_item_closeness_centrality = sum(item_closeness_centrality.values()) / len(item_closeness_centrality)
+average_item_betweenness_centrality = sum(item_betweenness_centrality.values()) / len(item_betweenness_centrality)
+average_item_clustering = nx.average_clustering(item_projection)
+
+
+# 平均特征向量中心度
+average_user_eigenvector_centrality = sum(user_eigenvector_centrality.values()) / len(user_eigenvector_centrality)
+average_item_eigenvector_centrality = sum(item_eigenvector_centrality.values()) / len(item_eigenvector_centrality)
+
+"item和user的平均度数中心度，实际上等于网络密度"
+# print('************************************************************')
+# print(f'user平均度数中心度: {average_user_degree_centrality}')
+# print(f'item平均度数中心度: {average_item_degree_centrality}')
+
+# print('************************************************************')
+# print(f'user平均接近中心度: {average_user_closeness_centrality}')
+# print(f'item平均接近中心度: {average_item_closeness_centrality}')
+#
+# print('************************************************************')
+# print(f'user平均中介中心度: {average_user_betweenness_centrality}')
+# print(f'item平均中介中心度: {average_item_betweenness_centrality}')
+
+print('************************************************************')
+print(f'user平均聚类系数: {average_user_clustering}')
+print(f'item平均聚类系数: {average_item_clustering}')
+
+# print('************************************************************')
+# print(f'user平均特征向量中心性: {average_user_eigenvector_centrality}')
+# print(f'item平均特征向量中心性: {average_item_eigenvector_centrality}')
+
+# 冗余度
+# print('************************************************************')
+# user_redundancy = 1 - nx.transitivity(user_projection)
+# print(f'user网络的冗余度: {user_redundancy}')
+# item_redundancy = 1 - nx.transitivity(item_projection)
+# print(f'item网络的冗余度: {item_redundancy}')
+
