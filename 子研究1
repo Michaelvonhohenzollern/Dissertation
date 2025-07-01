@@ -3,8 +3,8 @@ import networkx as nx
 from networkx.algorithms import bipartite
 
 # 读文件。行标题为item, 列标题为user
-# df = pd.read_excel('/Users/zhangrunzhe/Desktop/验证数据-风能/历年数据统一节点/C/2020.xlsx', index_col=0)
-df = pd.read_excel('/Users/zhangrunzhe/Desktop/HydroPolicies/分年份/mtx/C/2021.xlsx', index_col=0)
+# df = pd.read_excel('yourfile', index_col=0)
+df = pd.read_excel('yourfile', index_col=0)
 df = df.apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
 
 # 创建二模网络
